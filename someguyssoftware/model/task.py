@@ -24,10 +24,15 @@ class Task(Base):
     lastSuccess = Column("last_success", DateTime)
     status = Column(String(45))
 
+    # java-style
     def tostring(self):
-        return "Task = [name: " + self.name \
-            + ", active: " + str(self.active) \
-            + ", status: " + self.status \
-            + "]"
+        return "Task = [name: '" + self.name \
+            + "', active: " + str(self.active) \
+            + ", status: '" + self.status \
+            + "']"
+
+    # python-style
+    def __repr__(self):
+        return "<Task(name='%s')>" % self.name
 
 # ---------------------------------------------------------------------

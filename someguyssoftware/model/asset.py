@@ -12,3 +12,13 @@ class Asset(Base):
     id = Column(Integer, primary_key=True)
     symbol = Column(String(45))
     company = Column(String(75))
+
+    # java-style
+    def tostring(self):
+        return "Asset = [symbol: '" + self.symbol \
+            + "', company: '" + str(self.company) \
+            + "']"
+
+    # python-style
+    def __repr__(self):
+        return "<Asset(symbol='%s', company='%s')>" % (self.name , self.company)

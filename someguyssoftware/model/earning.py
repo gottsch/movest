@@ -1,14 +1,16 @@
 from someguyssoftware.model.base import Base
 from sqlalchemy import Column, ForeignKey, Integer, String, DateTime, DECIMAL
+from sqlalchemy.orm import relationship
+
 from datetime import datetime, timedelta, date
 
 #
 #
 # ----------------------------------------------------------------------
 class Earnings(Base):
-    def __init__(self, symbol, company, callTime, estimateEPS, reportedEPS, surprise, earningsDate):
-        self.symbol = symbol
-        self.company = company
+    def __init__(self, asset, earningsDate, callTime=None, estimateEPS=None, reportedEPS=None, surprise=None):
+        self.asset_id = asset.id
+        self.asset = asset
         self.callTime = callTime
         self.estimateEPS = estimateEPS
         self.reportedEPS = reportedEPS
@@ -16,8 +18,7 @@ class Earnings(Base):
         self.earningsDate = earningsDate
 
     def tostring(self):
-        return "Earnings = [symbol: " + self.symbol \
-               + ", company: " + self.company \
+        return "Earnings = [asset_id: " + self.asset_id \
                + ", date: " + self.earningsDate \
                + ", call time: " + self.callTime \
                + ", estimate EPS: " + ("-" if self.estimateEPS is None else self.estimateEPS) \
@@ -28,12 +29,13 @@ class Earnings(Base):
     # db mapping/properties
     __tablename__ = 'earnings'
     id = Column(Integer, primary_key=True)
-    symbol = Column(String(10))
-    company = Column(String(75))
+    asset_id = Column(Integer, ForeignKey('assets.id'))
+    asset = relationship("Asset")
+
+    earningsDate = Column("earnings_dt", DateTime, default=datetime.utcnow)
     callTime = Column("call_time", String(50))
     estimateEPS = Column("estimate_eps", DECIMAL(5,2))
     reportedEPS = Column("reported_eps", DECIMAL(5,2))
     surprise = Column("surprise", DECIMAL(5,2))
-    earningsDate = Column("earnings_dt", DateTime, default=datetime.utcnow)
 
 # ----------------------------------------------------------------------
