@@ -11,16 +11,16 @@ class Earnings(Base):
     def __init__(self, asset, earningsDate, callTime=None, estimateEPS=None, reportedEPS=None, surprise=None):
         self.asset_id = asset.id
         self.asset = asset
+        self.earningsDate = earningsDate
         self.callTime = callTime
         self.estimateEPS = estimateEPS
         self.reportedEPS = reportedEPS
         self.surprise = surprise
-        self.earningsDate = earningsDate
 
     def tostring(self):
-        return "Earnings = [asset_id: " + self.asset_id \
-               + ", date: " + self.earningsDate \
-               + ", call time: " + self.callTime \
+        return "Earnings = [asset_id: " + str(self.asset_id) \
+               + ", date: " + str(self.earningsDate) \
+               + ", call time: " + str(self.callTime) \
                + ", estimate EPS: " + ("-" if self.estimateEPS is None else self.estimateEPS) \
                + ", reported EPS: " + ("-" if self.reportedEPS is None else self.reportedEPS) \
                + ", surprise: " + ("-" if self.surprise is None else self.surprise) \

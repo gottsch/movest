@@ -42,5 +42,6 @@ print(asset.tostring())
 
 earningsServce = EarningsService(session)
 earningsServce.scrapeByDateRange(date(2018, 10, 15), date(2018, 10, 16))
-session.commit()
+#session.commit()
+session.close()
 

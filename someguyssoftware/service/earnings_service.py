@@ -1,7 +1,9 @@
 import requests
 from bs4 import BeautifulSoup
 
+from someguyssoftware.service.asset_service import AssetService
 from someguyssoftware.dao.earnings_dao import EarningsDao
+from someguyssoftware.model.asset import Asset
 from someguyssoftware.model.earning import Earnings
 
 from someguyssoftware.util import date_helper
@@ -19,6 +21,7 @@ class EarningsService:
 
     def __init__(self, session):
         self.dao = EarningsDao(session)
+        self.assetService = AssetService(session)
 
     #
     # format of table being scrapped:
@@ -27,6 +30,8 @@ class EarningsService:
     # ---------------------------------------------------------------------------------------------
     #
     def scrapeByDateRange(self, date1, date2):
+        earningsMap = dict()
+
         for dt in date_helper.daterange(date1, date2):
             print("Processing date -> " + dt.strftime("%Y-%m-%d"))
 
@@ -50,6 +55,7 @@ class EarningsService:
                     text = cell.text.replace('&nbsp;', '')
                     # add all the cells into a list
                     list_of_cells.append(text)
+
                 # add all the lists of cells into a list
                 list_of_rows.append(list_of_cells)
 
@@ -61,26 +67,46 @@ class EarningsService:
                 if list_of_cells[EarningsService.SURPRISE_IDX] == "-":
                     list_of_cells[EarningsService.SURPRISE_IDX] = None
 
+                # get asset
+                print("Searching for asset ->", list_of_cells[EarningsService.SYMBOL_IDX])
+                asset = self.assetService.getBySymbol(list_of_cells[EarningsService.SYMBOL_IDX])
+                if (asset is None):
+                    # create a new asset
+                    asset = Asset(list_of_cells[EarningsService.SYMBOL_IDX], list_of_cells[EarningsService.COMPANY_IDX])
+                    # TODO create service & dao calls to add the asset and commit (as well as nonTx version)
+                    self.assetService.dao.session.add(asset)
+                    self.assetService.dao.session.commit()
+
+                print("Asset -> ", asset.tostring())
                 # create an earnings object
-                e = Earnings(list_of_cells[EarningsService.SYMBOL_IDX],
-                             list_of_cells[EarningsService.COMPANY_IDX],
+                # have to create the asset first because earnings now has foreign key to asset
+                e = Earnings(asset,
+                             dt.strftime("%Y-%m-%d"),
+                             # list_of_cells[EarningsService.COMPANY_IDX],
                              list_of_cells[EarningsService.CALL_TIME_IDX],
                              list_of_cells[EarningsService.EPS_EST_IDX],
                              list_of_cells[EarningsService.REPORTED_EPS_IDX],
-                             list_of_cells[EarningsService.SURPRISE_IDX],
-                             dt.strftime("%Y-%m-%d"))
+                             list_of_cells[EarningsService.SURPRISE_IDX]
+                             )
                 print(e.tostring())
 
                 # TODO add each element to a map keyed on the symbol+date
+                earningsMap[e.asset.symbol] = e
+
                 # TODO build a query to check which earnings already exist
                 # TODO
 
-                #map example
-                numbers = (1, 2, 3, 4)
-                result = map(lambda x: x + x, numbers)
-                print(list(result))
 
-                self.dao.session.add(e)
+                # dict are equiv to map
+
+                #self.dao.session.add(e)
+
+            # get a list of keys from the earnings dict
+            keys = list(earningsMap.keys())
+
+            # provide keys to query existing earnings records
+            existingEarnings = self.dao.getByDateRange(date1, date2, keys)
+            print(existingEarnings)
 
             # commit the inserts after each row
             self.dao.session.commit()
@@ -97,8 +123,8 @@ class EarningsService:
     def getByID(self, id):
         return self.dao.findByID(id)
 
-    def getByDateRange(self, date1, date2):
-        return self.dao.findByDateRange(self, date1, date2)
+    def getByDateRange(self, date1, date2, assets=None):
+        return self.dao.findByDateRange(self, date1, date2, assets)
 
     def getByAsset(self, asset, year):
         return self.dao.findByAsset(self, asset, year)

@@ -15,7 +15,8 @@ class Asset(Base):
 
     # java-style
     def tostring(self):
-        return "Asset = [symbol: '" + self.symbol \
+        return "Asset = [id:" + str(self.id) \
+            + ", symbol: '" + self.symbol \
             + "', company: '" + str(self.company) \
             + "']"
 

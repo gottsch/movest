@@ -8,4 +8,8 @@ class AssetService:
 
     #
     def getByID(self, id):
-        return self.dao.findByID(1)
+        return self.dao.findByID(id)
+
+    #
+    def getBySymbol(self, symbol):
+        return self.dao.findBySymbol(symbol)

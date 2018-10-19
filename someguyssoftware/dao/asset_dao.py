@@ -7,3 +7,6 @@ class AssetDao:
 
     def findByID(self, id):
         return self.session.query(Asset).get(id)
+
+    def findBySymbol(self, symbol):
+        return self.session.query(Asset).filter(Asset.symbol == symbol).one_or_none()
