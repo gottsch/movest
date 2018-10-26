@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Overview</title>
+    <link rel="stylesheet" media="all" href="/static/movest.css">
+</head>
+<body>
+    <header id="header">
+        Header
+    </header>
+    <main id="main">
+        <div id="content">
+        <h1>Hello {{ name }}!</h1>
+            <div id="watchlists">
+                <form method="POST" action="/watchlist/">
+                    <input type="text" name="name">
+                    <input type="submit" value="Add">
+                </form>
+            </div>
+            <div id="watchlist"></div>
+            <div id="earnings"></div>
+        </div>
+
+    </main>
+    <aside id="info-bar">
+        Aside
+    </aside>
+    <footer id="footer">
+        Fooer
+    </footer>
+</body>
+</html>

@@ -17,14 +17,27 @@ class Earnings(Base):
         self.reportedEPS = reportedEPS
         self.surprise = surprise
 
+    # updates this instance entity from the provided earnings object
+    # NOTE does not update the ID as that is the db entity identifier
+    def update(self, earning):
+        self.asset_id = earning.asset_id
+        self.callTime = earning.callTime
+        self.earningsDate = earning.earningsDate
+        self.estimateEPS = earning.estimateEPS
+        self.reportedEPS = earning.reportedEPS
+        self.surprise = earning.surprise
+        
     def tostring(self):
         return "Earnings = [asset_id: " + str(self.asset_id) \
                + ", date: " + str(self.earningsDate) \
                + ", call time: " + str(self.callTime) \
-               + ", estimate EPS: " + ("-" if self.estimateEPS is None else self.estimateEPS) \
-               + ", reported EPS: " + ("-" if self.reportedEPS is None else self.reportedEPS) \
-               + ", surprise: " + ("-" if self.surprise is None else self.surprise) \
-               + "]"
+               + ", estimate EPS: " + ("-" if self.estimateEPS is None else str(self.estimateEPS)) \
+               + ", reported EPS: " + ("-" if self.reportedEPS is None else str(self.reportedEPS)) \
+               + ", surprise: " + ("-" if self.surprise is None else str(self.surprise))
+
+    def __repr__(self):
+        return self.tostring()
+
 
     # db mapping/properties
     __tablename__ = 'earnings'

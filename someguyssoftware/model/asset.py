@@ -1,5 +1,7 @@
-from someguyssoftware.model.base import Base
-from sqlalchemy import Column, Integer, String, DateTime, Boolean
+from someguyssoftware.model.base import Base, association_table
+from sqlalchemy import Column, Integer, String, DateTime, Boolean, Table, ForeignKey
+from sqlalchemy.orm import relationship, backref
+from marshmallow import Schema, fields
 
 #
 class Asset(Base):
@@ -12,6 +14,10 @@ class Asset(Base):
     id = Column(Integer, primary_key=True)
     symbol = Column(String(45))
     company = Column(String(75))
+    watchLists = relationship(
+        "WatchList",
+        secondary=association_table,
+        back_populates="assets")
 
     # java-style
     def tostring(self):
@@ -22,4 +28,18 @@ class Asset(Base):
 
     # python-style
     def __repr__(self):
-        return "<Asset(symbol='%s', company='%s')>" % (self.name , self.company)
+        return "<Asset(symbol='%s', company='%s')>" % (self.symbol , self.company)
+
+    #
+    def to_json(self):
+        d = dict()
+        d['id'] = self.id
+        d['symbol'] = self.symbol
+        d['company'] = self.company
+        return d
+
+
+class AssetSchema(Schema):
+    id = fields.Number()
+    symbol = fields.Str()
+    company = fields.Str()

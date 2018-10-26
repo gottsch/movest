@@ -1,5 +1,6 @@
 import requests
 from bs4 import BeautifulSoup
+from sqlalchemy import exc
 
 from someguyssoftware.service.asset_service import AssetService
 from someguyssoftware.dao.earnings_dao import EarningsDao
@@ -73,13 +74,11 @@ class EarningsService:
                 if (asset is None):
                     # create a new asset
                     asset = Asset(list_of_cells[EarningsService.SYMBOL_IDX], list_of_cells[EarningsService.COMPANY_IDX])
-                    # TODO create service & dao calls to add the asset and commit (as well as nonTx version)
-                    self.assetService.dao.session.add(asset)
-                    self.assetService.dao.session.commit()
+                    self.assetService.save(asset)
 
-                print("Asset -> ", asset.tostring())
+                # print("Asset -> ", asset.tostring())
                 # create an earnings object
-                # have to create the asset first because earnings now has foreign key to asset
+                # NOTE have to create the asset first because earnings now has foreign key to asset
                 e = Earnings(asset,
                              dt.strftime("%Y-%m-%d"),
                              # list_of_cells[EarningsService.COMPANY_IDX],
@@ -88,43 +87,52 @@ class EarningsService:
                              list_of_cells[EarningsService.REPORTED_EPS_IDX],
                              list_of_cells[EarningsService.SURPRISE_IDX]
                              )
-                print(e.tostring())
+                #print(e.tostring())
 
-                # TODO add each element to a map keyed on the symbol+date
+                # TODO add each element to a map keyed on the symbol+date instead of just symbol
+                # TODO will prevent collisions are bigger date ranges where multiple earnings for the same symbol could appear
                 earningsMap[e.asset.symbol] = e
-
-                # TODO build a query to check which earnings already exist
-                # TODO
-
-
-                # dict are equiv to map
-
-                #self.dao.session.add(e)
 
             # get a list of keys from the earnings dict
             keys = list(earningsMap.keys())
 
             # provide keys to query existing earnings records
-            existingEarnings = self.dao.getByDateRange(date1, date2, keys)
-            print(existingEarnings)
+            existingEarnings = self.getByDateRange(date1, date2, keys)
+
+            # process each earnings
+            for key, value in earningsMap.items():
+                # if existing is empty or doesn't contain the earnings
+                if not existingEarnings or not any(x.asset.symbol == key for x in existingEarnings):
+                    print("Adding earnings -> ", value.asset.symbol)
+                    self.dao.session.add(value)
+                else:
+                    # get the existing earnings
+                    ee = next((x for x in existingEarnings if x.asset.symbol == key), None)
+                    if (ee is not None):
+                        print("Updating earnings -> ", value.asset.symbol)
+                        # update the existing with what was pulled in.
+                        ee.update(value)
+                        self.dao.session.add(ee)
 
             # commit the inserts after each row
-            self.dao.session.commit()
+            try:
+                self.dao.session.commit()
+            except exc.SQLAlchemyError:
+                print("an error occurred committing the session.")
+                self.dao.session.rollback()
+                return
 
-        # TODO get html from web and beautify
-        # TODO create a list of earnings objects / map by IDs
-        #TODO check if the underlying asset exists for each earning
-        # TODO pull all earnings by list of ID
-        # TODO is historical, then update
-        # TODO is non-existent add to DB
-        # TODO if earnings asset is in watchlist, then add to calendar
+            # clear all the lists, maps
+            list_of_cells.clear()
+            list_of_rows.clear()
+            earningsMap.clear()
 
     #
     def getByID(self, id):
         return self.dao.findByID(id)
 
     def getByDateRange(self, date1, date2, assets=None):
-        return self.dao.findByDateRange(self, date1, date2, assets)
+        return self.dao.findByDateRange(date1, date2, assets)
 
     def getByAsset(self, asset, year):
         return self.dao.findByAsset(self, asset, year)

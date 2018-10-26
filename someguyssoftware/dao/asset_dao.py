@@ -10,3 +10,16 @@ class AssetDao:
 
     def findBySymbol(self, symbol):
         return self.session.query(Asset).filter(Asset.symbol == symbol).one_or_none()
+
+    def findAllWatched(self):
+        return self.session.query(Asset).filter(Asset.watchLists != None).all()
+
+
+    def save(self, asset):
+        self.session.add(asset)
+        self.session.flush()
+        return asset
+
+    def saveNoTx(self, asset):
+        self.session.add(asset)
+        return asset

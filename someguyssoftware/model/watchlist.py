@@ -1,14 +1,10 @@
-from someguyssoftware.model.base import Base
-from someguyssoftware.model.asset import Asset
+from someguyssoftware.model.base import Base, association_table
+from someguyssoftware.model.asset import Asset, AssetSchema
 
 from sqlalchemy import Column, Integer, ForeignKey, String, DateTime, Boolean, Table
 from sqlalchemy.orm import relationship, backref
 
-# the association table between watch_list and assets (where watch_list is the parent)
-association_table = Table('watch_list_assets', Base.metadata,
-                          Column('watch_list_id', Integer, ForeignKey('watch_list.id')),
-                          Column('asset_id', Integer, ForeignKey('assets.id'))
-                          )
+from marshmallow import Schema, fields
 
 #
 class WatchList(Base):
@@ -19,4 +15,30 @@ class WatchList(Base):
     __tablename__ = 'watch_list'
     id = Column(Integer, primary_key=True)
     name = Column(String(45))
-    assets = relationship("Asset", secondary=association_table)
+    assets = relationship("Asset", secondary=association_table, back_populates="watchLists")
+
+
+    # python-style
+    def __repr__(self):
+        return "<WatchList(name='%s')>" % self.name
+
+    # create a dictionary of native values (ie not sqlalchemy properties ex Column())
+    def to_json(self):
+        d = dict()
+        d['id'] = self.id
+        d['name'] = self.name
+        # add all the assets
+        a = [x.to_json() for x in self.assets]
+        d['assets'] = a
+        return d
+
+"""
+
+"""
+class WatchListSchema(Schema):
+    class Meta:
+        ordered = True
+
+    id = fields.Number()
+    name = fields.Str()
+    assets = fields.List(fields.Nested(AssetSchema))

@@ -13,3 +13,10 @@ class AssetService:
     #
     def getBySymbol(self, symbol):
         return self.dao.findBySymbol(symbol)
+
+    def getAllWatch(self):
+        return self.dao.findAllWatched()
+
+    #
+    def save(self, asset):
+        return self.dao.save(asset)
