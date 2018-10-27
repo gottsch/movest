@@ -14,6 +14,9 @@ class AssetService:
     def getBySymbol(self, symbol):
         return self.dao.findBySymbol(symbol)
 
+    def getAll(self, limit=0):
+        return self.dao.findAll(limit)
+
     def getAllWatch(self):
         return self.dao.findAllWatched()
 

@@ -11,6 +11,11 @@ class AssetDao:
     def findBySymbol(self, symbol):
         return self.session.query(Asset).filter(Asset.symbol == symbol).one_or_none()
 
+    def findAll(self, limit=0):
+        if (limit == 0):
+            return self.session.query(Asset).all()
+        return self.session.query(Asset).limit(limit).all()
+
     def findAllWatched(self):
         return self.session.query(Asset).filter(Asset.watchLists != None).all()
 

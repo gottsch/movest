@@ -8,7 +8,11 @@ from flask import Flask
 from flask import render_template
 from flask import request, redirect, url_for
 
+from flask_cors import CORS
+
 from someguyssoftware.model.base import Base
+from someguyssoftware.model.asset import Asset, AssetSchema
+from someguyssoftware.service.asset_service import AssetService
 from someguyssoftware.service.watchlist_service import WatchListService
 from someguyssoftware.model.watchlist import WatchList, WatchListSchema
 
@@ -24,9 +28,11 @@ session = Session()
 
 # services
 wlService = WatchListService(session)
+assetService = AssetService(session)
 
 # create flask application
 app = Flask(__name__)
+CORS(app)
 
 @app.route('/')
 def root():
@@ -41,6 +47,13 @@ def overview(name=None):
         x = request.args.get('x')
         #return "Overview"
         return render_template('overview.html', name=name + ":" + x)
+
+@app.route("/rest/assets/", methods=["GET"])
+def assets():
+    list = assetService.getAll(5)
+    schema = AssetSchema(many=True)
+    x = schema.dump(list)
+    return json.dumps(x.data, indent=2)
 
 @app.route("/rest/watchlists/", methods=["GET"])
 def watchlists():
@@ -61,7 +74,6 @@ def rest_watchlist_by_id(id):
     w = wlService.getByID(id)
     schema = WatchListSchema()
     return json.dumps(schema.dump(w).data)
-    #return json.dumps(w.to_json(), indent=4)
 
 @app.route("/watchlist/<id>", methods=["GET"])
 def watchlist_by_id(id):
